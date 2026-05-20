@@ -1,0 +1,57 @@
+.form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tip-item {
+  padding: 12px 14px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.account-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.account-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.account-owner {
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.account-balance {
+  font-weight: 700;
+  color: #1677ff;
+  white-space: nowrap;
+}
+
+.loading-state {
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #8c8c8c;
+}
+
+.inline-status {
+  margin-bottom: 12px;
+}

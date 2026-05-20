@@ -1,0 +1,62 @@
+.toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.summary-grid {
+  margin-bottom: 24px;
+}
+
+.summary-label {
+  color: #8c8c8c;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.summary-value.gold {
+  color: #d48806;
+}
+
+.summary-value.green {
+  color: #389e0d;
+}
+
+.summary-value.red {
+  color: #cf1322;
+}
+
+.account-name {
+  font-weight: 600;
+}
+
+.action-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pending-row {
+  margin-bottom: 12px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.loading-state {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #8c8c8c;
+}
+
+.inline-status {
+  margin-bottom: 12px;
+}

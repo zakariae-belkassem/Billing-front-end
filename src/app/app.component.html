@@ -1,0 +1,19 @@
+<nz-layout class="app-layout">
+  <nz-header class="app-header">
+    <div class="brand-block">
+      <div class="brand-title">Gestion de virements</div>
+      <div class="brand-subtitle">Mini application de gestion des virements</div>
+    </div>
+
+    <div class="nav-actions">
+      <a nz-button nzType="primary" routerLink="/initiate-transfer">Initier un virement</a>
+      <a nz-button routerLink="/transfers">Consulter les virements</a>
+    </div>
+  </nz-header>
+
+  <nz-content class="app-content">
+    <div class="page-shell">
+      <router-outlet></router-outlet>
+    </div>
+  </nz-content>
+</nz-layout>

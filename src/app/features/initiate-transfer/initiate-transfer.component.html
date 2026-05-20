@@ -1,0 +1,163 @@
+<h1 class="page-title">Initier un virement</h1>
+<p class="page-subtitle">
+  Crée un virement instantané ou manuel en utilisant les comptes disponibles.
+</p>
+
+<nz-row [nzGutter]="24">
+  <nz-col [nzXs]="24" [nzLg]="15">
+    <nz-card nzTitle="Formulaire de virement">
+      <nz-alert
+        *ngIf="successMessage"
+        class="section-gap"
+        nzType="success"
+        [nzMessage]="successMessage"
+        nzShowIcon
+      ></nz-alert>
+
+      <nz-alert
+        *ngIf="errorMessage"
+        class="section-gap"
+        nzType="error"
+        [nzMessage]="errorMessage"
+        nzShowIcon
+      ></nz-alert>
+
+      <nz-alert
+        *ngIf="transferForm.hasError('sameAccount') && (transferForm.touched || transferForm.dirty)"
+        class="section-gap"
+        nzType="warning"
+        nzMessage="Le compte source et le compte destination doivent être différents."
+        nzShowIcon
+      ></nz-alert>
+
+      <form nz-form nzLayout="vertical" [formGroup]="transferForm" (ngSubmit)="submit()">
+        <nz-form-item>
+          <nz-form-label nzRequired>Compte source</nz-form-label>
+          <nz-form-control nzErrorTip="Selectionne le compte source">
+            <nz-select formControlName="sourceAccountNumber" nzPlaceHolder="Choisir le compte source">
+              <nz-option
+                *ngFor="let account of accounts"
+                [nzLabel]="getAccountLabel(account)"
+                [nzValue]="account.accountNumber"
+              ></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label nzRequired>Compte destination</nz-form-label>
+          <nz-form-control nzErrorTip="Selectionne le compte destination">
+            <nz-select
+              formControlName="destinationAccountNumber"
+              nzPlaceHolder="Choisir le compte destination"
+            >
+              <nz-option
+                *ngFor="let account of accounts"
+                [nzLabel]="getAccountLabel(account)"
+                [nzValue]="account.accountNumber"
+              ></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-row [nzGutter]="16">
+          <nz-col [nzXs]="24" [nzMd]="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Montant</nz-form-label>
+              <nz-form-control nzErrorTip="Le montant doit etre superieur a 0">
+                <nz-input-number
+                  class="full-width"
+                  formControlName="amount"
+                  [nzMin]="0.01"
+                  [nzStep]="10"
+                  [nzPrecision]="2"
+                  nzPlaceHolder="Montant du virement"
+                ></nz-input-number>
+              </nz-form-control>
+            </nz-form-item>
+          </nz-col>
+
+          <nz-col [nzXs]="24" [nzMd]="12">
+            <nz-form-item>
+              <nz-form-label nzRequired>Type de virement</nz-form-label>
+              <nz-form-control nzErrorTip="Selectionne le type de virement">
+                <nz-select formControlName="type" nzPlaceHolder="Choisir le type">
+                  <nz-option
+                    *ngFor="let transferType of transferTypes"
+                    [nzLabel]="transferType.label"
+                    [nzValue]="transferType.value"
+                  ></nz-option>
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
+          </nz-col>
+        </nz-row>
+
+        <nz-form-item>
+          <nz-form-label>Description</nz-form-label>
+          <nz-form-control>
+            <textarea
+              nz-input
+              rows="4"
+              formControlName="description"
+              placeholder="Motif du virement"
+            ></textarea>
+          </nz-form-control>
+        </nz-form-item>
+
+        <div class="form-actions">
+          <button nz-button nzType="primary" type="submit" [nzLoading]="submitting">
+            Créer le virement
+          </button>
+          <a nz-button routerLink="/transfers">Voir la liste des virements</a>
+        </div>
+      </form>
+
+      <nz-divider></nz-divider>
+
+      <div class="tips-list">
+        <div class="tip-item">
+          <strong>INSTANT :</strong>
+          Le compte source est debité et le compte destination est credité, tous 2 immédiatement.
+        </div>
+        <div class="tip-item">
+          <strong>MANUAL :</strong>
+          le virement est en atente de traitement et pourra ensuite être validé ou rejeté.
+        </div>
+      </div>
+    </nz-card>
+  </nz-col>
+
+  <nz-col [nzXs]="24" [nzLg]="9">
+    <nz-card nzTitle="Comptes disponibles" [nzExtra]="refreshAccountsTpl">
+      <div class="loading-state" *ngIf="loadingAccounts && !accounts.length">
+        <nz-spin nzSimple></nz-spin>
+        <span>Chargement des comptes...</span>
+      </div>
+
+      <div class="inline-status muted" *ngIf="loadingAccounts && accounts.length">
+        Mise à jour des comptes en cours...
+      </div>
+
+      <ng-container *ngIf="accounts.length">
+        <div class="account-item" *ngFor="let account of accounts">
+          <div>
+            <div class="account-owner">{{ account.ownerName }}</div>
+            <div class="muted">{{ account.accountNumber }}</div>
+          </div>
+          <div class="account-balance">
+            {{ toNumber(account.balance) | number: '1.2-2' }} {{ account.currency }}
+          </div>
+        </div>
+      </ng-container>
+
+      <nz-empty *ngIf="!loadingAccounts && !accounts.length" nzNotFoundContent="Aucun compte trouve"></nz-empty>
+
+      <ng-template #refreshAccountsTpl>
+        <button nz-button nzType="default" nzSize="small" type="button" (click)="loadAccounts()">
+          Rafraichir
+        </button>
+      </ng-template>
+    </nz-card>
+  </nz-col>
+</nz-row>

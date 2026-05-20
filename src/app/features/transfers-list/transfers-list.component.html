@@ -1,0 +1,196 @@
+<h1 class="page-title">Consultation des virements</h1>
+<p class="page-subtitle">
+  Consulte les virements déjà créés, puis valide ou rejette les virements manuels en attente.
+</p>
+
+<div class="toolbar section-gap">
+  <a nz-button nzType="primary" routerLink="/initiate-transfer">Nouveau virement</a>
+  <button nz-button type="button" (click)="loadTransfers()">Rafraichir</button>
+</div>
+
+<nz-alert
+  *ngIf="successMessage"
+  class="section-gap"
+  nzType="success"
+  [nzMessage]="successMessage"
+  nzShowIcon
+></nz-alert>
+
+<nz-alert
+  *ngIf="errorMessage"
+  class="section-gap"
+  nzType="error"
+  [nzMessage]="errorMessage"
+  nzShowIcon
+></nz-alert>
+
+<div class="inline-status muted section-gap" *ngIf="loading && transfers.length">
+  Mise à jour des virements en cours...
+</div>
+
+<nz-row [nzGutter]="16" class="summary-grid section-gap">
+  <nz-col [nzXs]="24" [nzSm]="12" [nzLg]="6">
+    <nz-card>
+      <div class="summary-label">Total</div>
+      <div class="summary-value">{{ transfers.length }}</div>
+    </nz-card>
+  </nz-col>
+
+  <nz-col [nzXs]="24" [nzSm]="12" [nzLg]="6">
+    <nz-card>
+      <div class="summary-label">En attente</div>
+      <div class="summary-value gold">{{ countByStatus('PENDING') }}</div>
+    </nz-card>
+  </nz-col>
+
+  <nz-col [nzXs]="24" [nzSm]="12" [nzLg]="6">
+    <nz-card>
+      <div class="summary-label">Completés</div>
+      <div class="summary-value green">{{ countByStatus('COMPLETED') }}</div>
+    </nz-card>
+  </nz-col>
+
+  <nz-col [nzXs]="24" [nzSm]="12" [nzLg]="6">
+    <nz-card>
+      <div class="summary-label">Rejetés</div>
+      <div class="summary-value red">{{ countByStatus('REJECTED') }}</div>
+    </nz-card>
+  </nz-col>
+</nz-row>
+
+<nz-card *ngIf="pendingTransfers().length" nzTitle="Virements manuels en attente" class="section-gap">
+  <div class="toolbar">
+    <span>{{ pendingTransfers().length }} virement(s) en attente d'action</span>
+  </div>
+
+  <div
+    class="action-group pending-row"
+    *ngFor="let transfer of pendingTransfers()"
+  >
+    <div>
+      <strong>#{{ transfer.id }}</strong>
+      - {{ transfer.sourceAccount.accountNumber }} vers {{ transfer.destinationAccount.accountNumber }}
+      - {{ toNumber(transfer.amount) | number: '1.2-2' }} {{ transfer.sourceAccount.currency }}
+    </div>
+
+    <div class="action-group">
+      <button
+        nz-button
+        nzType="primary"
+        nzSize="small"
+        type="button"
+        [nzLoading]="updatingId === transfer.id && updatingStatus === 'COMPLETED'"
+        [disabled]="updatingId === transfer.id"
+        (click)="updateStatus(transfer.id, 'COMPLETED')"
+      >
+        Valider
+      </button>
+
+      <button
+        nz-button
+        nzDanger
+        nzSize="small"
+        type="button"
+        [nzLoading]="updatingId === transfer.id && updatingStatus === 'REJECTED'"
+        [disabled]="updatingId === transfer.id"
+        (click)="updateStatus(transfer.id, 'REJECTED')"
+      >
+        Rejeter
+      </button>
+    </div>
+  </div>
+</nz-card>
+
+<nz-card nzTitle="Liste des virements">
+  <div class="loading-state" *ngIf="loading && !transfers.length">
+    <nz-spin nzSimple></nz-spin>
+    <span>Chargement des virements...</span>
+  </div>
+
+  <ng-container *ngIf="!loading || transfers.length">
+    <ng-container *ngIf="transfers.length; else emptyState">
+      <nz-table [nzData]="transfers" [nzBordered]="true" [nzFrontPagination]="false" nzSize="middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Source</th>
+            <th>Destination</th>
+            <th>Montant</th>
+            <th>Type</th>
+            <th>Statut</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let transfer of transfers">
+            <td>#{{ transfer.id }}</td>
+            <td>{{ transfer.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+
+            <td>
+              <div class="account-name">{{ transfer.sourceAccount.ownerName }}</div>
+              <div class="muted">{{ transfer.sourceAccount.accountNumber }}</div>
+            </td>
+
+            <td>
+              <div class="account-name">{{ transfer.destinationAccount.ownerName }}</div>
+              <div class="muted">{{ transfer.destinationAccount.accountNumber }}</div>
+            </td>
+
+            <td>{{ toNumber(transfer.amount) | number: '1.2-2' }} {{ transfer.sourceAccount.currency }}</td>
+
+            <td>
+              <nz-tag [nzColor]="transfer.type === 'INSTANT' ? 'blue' : 'purple'">
+                {{ transfer.type }}
+              </nz-tag>
+            </td>
+
+            <td>
+              <app-status-tag [status]="transfer.status"></app-status-tag>
+            </td>
+
+            <td>{{ transfer.description || '-' }}</td>
+
+            <td>
+              <div class="action-group" *ngIf="transfer.status === 'PENDING'; else noAction">
+                <button
+                  nz-button
+                  nzType="primary"
+                  nzSize="small"
+                  type="button"
+                  [nzLoading]="updatingId === transfer.id && updatingStatus === 'COMPLETED'"
+                  [disabled]="updatingId === transfer.id"
+                  (click)="updateStatus(transfer.id, 'COMPLETED')"
+                >
+                  Valider
+                </button>
+
+                <button
+                  nz-button
+                  nzDanger
+                  nzSize="small"
+                  type="button"
+                  [nzLoading]="updatingId === transfer.id && updatingStatus === 'REJECTED'"
+                  [disabled]="updatingId === transfer.id"
+                  (click)="updateStatus(transfer.id, 'REJECTED')"
+                >
+                  Rejeter
+                </button>
+              </div>
+
+              <ng-template #noAction>
+                <span class="muted">Aucune</span>
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </ng-container>
+  </ng-container>
+
+  <ng-template #emptyState>
+    <nz-empty *ngIf="!loading" nzNotFoundContent="Aucun virement enregistre pour le moment"></nz-empty>
+  </ng-template>
+</nz-card>
